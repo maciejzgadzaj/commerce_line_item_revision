@@ -1,0 +1,125 @@
+<?php
+
+/**
+ * @file
+ * Installation functions for Commerce Line Item Revision module.
+ */
+
+/**
+ * Implements hook_schema().
+ */
+function commerce_line_item_revision_schema() {
+  $schema = array();
+
+  $schema['commerce_line_item_revision'] = array(
+    'description' => 'Saves information about each saved revision of a {commerce_line_item}.',
+    'fields' => array(
+      'line_item_id' => array(
+        'description' => 'The {commerce_line_item}.line_item_id of the line item this revision belongs to.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'revision_id' => array(
+        'description' => 'The primary identifier for this revision.',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'revision_uid' => array(
+        'description' => 'The {users}.uid that owns the line item at this revision.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'line_item_label' => array(
+        'description' => 'The merchant defined label for a line item.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ),
+      'quantity' => array(
+        'type' => 'numeric',
+        'size' => 'normal',
+        'not null' => TRUE,
+        'default' => 0,
+        'precision' => 10,
+        'scale' => 2,
+      ),
+      'log' => array(
+        'description' => 'The log entry explaining the changes in this version.',
+        'type' => 'text',
+        'not null' => TRUE,
+        'size' => 'big',
+      ),
+      'revision_timestamp' => array(
+        'description' => 'The Unix timestamp when this revision was created.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'data' => array(
+        'type' => 'blob',
+        'not null' => FALSE,
+        'size' => 'big',
+        'serialize' => TRUE,
+        'description' => 'A serialized array of additional data.',
+      ),
+    ),
+    'primary key' => array('revision_id'),
+    'indexes' => array(
+      'line_item_id' => array('line_item_id'),
+    ),
+    'foreign keys' => array(
+      'line_item' => array(
+        'table' => 'commerce_line_item',
+        'columns'=> array('line_item_id' => 'line_item_id'),
+      ),
+      'owner' => array(
+        'table' => 'users',
+        'columns' => array('revision_uid' => 'uid'),
+      ),
+    ),
+  );
+
+  return $schema;
+}
+
+/**
+ * Implements hook_schema_alter().
+ */
+function commerce_line_item_revision_schema_alter(&$schema) {
+  if (isset($schema['commerce_line_item'])) {
+    $schema['commerce_line_item']['fields']['revision_id'] = array(
+      'description' => 'The current {commerce_line_item_revision}.revision_id version identifier.',
+      'type' => 'int',
+      'unsigned' => TRUE,
+      'not null' => FALSE,
+    );
+    $schema['commerce_line_item']['unique keys']['revision_id'] = array('revision_id');
+    $schema['commerce_line_item']['foreign keys']['current_revision'] = array(
+      'table' => 'commerce_line_item_revision',
+      'columns'=> array('revision_id' => 'revision_id'),
+    );
+  }
+}
+
+/**
+ * Implements hook_install().
+ */
+function commerce_line_item_revision_install() {
+  if (!db_field_exists('commerce_line_item', 'revision_id')) {
+    $schema = drupal_get_schema('commerce_line_item');
+    db_add_field('commerce_line_item', 'revision_id', $schema['fields']['revision_id']);
+  }
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function commerce_line_item_revision_uninstall() {
+  if (db_field_exists('commerce_line_item', 'revision_id')) {
+    db_drop_field('commerce_line_item', 'revision_id');
+  }
+}

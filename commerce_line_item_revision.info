@@ -1,1 +1,5 @@
 name = Commerce Line Item Revision
+description = Adds revision support to Commerce Line Item entity type.
+core = 7.x
+package = Commerce (contrib)
+dependencies[] = commerce_line_item

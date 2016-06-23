@@ -1,0 +1,71 @@
+<?php
+
+/**
+ * @file
+ * Adds revision support to the core Commerce Line Item entity type.
+ */
+
+/**
+ * Implements hook_entity_info_alter().
+ *
+ * @see entity_get_info()
+ */
+function commerce_line_item_revision_entity_info_alter(&$entity_info) {
+  if (isset($entity_info['commerce_line_item'])) {
+    // This is enough to enable revision support for an entity type.
+    $entity_info['commerce_line_item']['revision table'] = 'commerce_line_item_revision';
+    $entity_info['commerce_line_item']['entity keys']['revision'] = 'revision_id';
+    // The value of 'schema_fields_sql' gets populated by entity_get_info()
+    // before the entity info gets altered - therefore we need to populate it
+    // ourselves for the revision table.
+    $entity_info['commerce_line_item']['schema_fields_sql']['revision table'] = drupal_schema_fields_sql('commerce_line_item_revision');
+  }
+}
+
+/**
+ * Implements hook_entity_presave().
+ *
+ * Replicates revision processing from CommerceOrderEntityController.
+ *
+ * @see CommerceOrderEntityController::save()
+ */
+function commerce_line_item_revision_entity_presave($entity, $entity_type) {
+  global $user;
+
+  if ($entity_type == 'commerce_line_item') {
+    // Replicate revision processing from CommerceOrderEntityController::save().
+    $entity->revision_timestamp = REQUEST_TIME;
+    $entity->revision_uid = $user->uid;
+
+    // If auto-revisioning of line items is enabled.
+    if (variable_get('commerce_line_item_revision_auto', FALSE)) {
+      $entity->revision = TRUE;
+    }
+
+    // When updating an existing line item that has $entity->log value set to
+    // a non-empty string, its value will be copied over to the new revision,
+    // which we don't want. Therefore if the new log value is the same as the
+    // old one, we are relatively safe to assume that it was not provided by
+    // a user, and just reset it to an empty string.
+    if (!empty($entity->line_item_id) && $entity->log === $entity->original->log) {
+      $entity->log = '';
+    }
+    // When inserting either a new line item or revision, $entity->log must
+    // be set because {commerce_line_item_revision}.log is a text column
+    // and therefore cannot have a default value. However, it might not be
+    // set at this point, so we ensure that it is at least an empty string
+    // in that case.
+    elseif (!empty($entity->is_new) || empty($entity->line_item_id) || !empty($entity->revision)) {
+      if (!isset($entity->log)) {
+        $entity->log = '';
+      }
+    }
+    // If we are updating an existing line item without adding a new revision,
+    // we need to make sure $entity->log is unset whenever it is empty. As
+    // long as $entity->log is unset, drupal_write_record() will not attempt
+    // to update the existing database column when re-saving the revision.
+    elseif (empty($entity->log)) {
+      unset($entity->log);
+    }
+  }
+}
