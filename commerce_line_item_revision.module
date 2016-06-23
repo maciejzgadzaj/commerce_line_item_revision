@@ -96,3 +96,18 @@ function commerce_line_item_revision_form_commerce_order_settings_form_alter(&$f
     '#default_value' => variable_get('commerce_line_item_revision_auto', FALSE),
   );
 }
+
+/**
+ * Implements hook_views_post_execute().
+ */
+function commerce_line_item_revision_views_post_execute(&$view) {
+  // Our view listing line item revisions has a bit strange path, and because
+  // of that Drupal generates for it an equally strange breadcrumb. Let's then
+  // get rid of those strange breadcrumb elements here.
+  if ($view->name == 'commerce_line_item_revisions') {
+    $breadcrumb = drupal_get_breadcrumb();
+    array_pop($breadcrumb);
+    array_pop($breadcrumb);
+    drupal_set_breadcrumb($breadcrumb);
+  }
+}

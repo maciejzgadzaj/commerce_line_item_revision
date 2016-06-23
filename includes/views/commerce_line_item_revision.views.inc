@@ -39,7 +39,7 @@ function commerce_line_item_revision_views_data() {
     'commerce_line_item' => array(
       'left_field' => 'revision_id',
       'field' => 'revision_id',
-    )
+    ),
   );
 
   $data['commerce_line_item_revision']['table']['default_relationship'] = array(
