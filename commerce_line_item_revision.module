@@ -69,3 +69,20 @@ function commerce_line_item_revision_entity_presave($entity, $entity_type) {
     }
   }
 }
+
+/**
+ * Implements hook_form_FORM_ID_alter() for commerce_order_settings_form().
+ *
+ * Alters admin Order settings form to add a checkbox to automatically create
+ * new line item revision each time a line item gets updated.
+ *
+ * @see commerce_order_settings_form()
+ */
+function commerce_line_item_revision_form_commerce_order_settings_form_alter(&$form, &$form_state) {
+  $form['commerce_line_item_revision_auto'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Create new revisions when line items are updated by default.'),
+    '#description' => t('Enabling this option will create a new line item revision on each line item update.'),
+    '#default_value' => variable_get('commerce_line_item_revision_auto', FALSE),
+  );
+}

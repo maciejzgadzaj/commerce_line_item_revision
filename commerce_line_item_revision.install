@@ -122,4 +122,6 @@ function commerce_line_item_revision_uninstall() {
   if (db_field_exists('commerce_line_item', 'revision_id')) {
     db_drop_field('commerce_line_item', 'revision_id');
   }
+
+  variable_del('commerce_line_item_revision_auto');
 }
