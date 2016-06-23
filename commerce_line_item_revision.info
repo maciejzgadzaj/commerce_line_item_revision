@@ -4,3 +4,6 @@ core = 7.x
 package = Commerce (contrib)
 dependencies[] = commerce_line_item
 configure = admin/commerce/config/order
+
+; Views handlers
+files[] = includes/views/handlers/commerce_line_item_revision_handler_field_line_item_title.inc
